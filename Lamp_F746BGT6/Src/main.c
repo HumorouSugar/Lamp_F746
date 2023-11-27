@@ -110,6 +110,7 @@ void initialization()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN;
@@ -117,7 +118,6 @@ void initialization()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOKEN;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM13EN;
-	RCC->APB1ENR |= RCC_APB1ENR_TIM14EN;
 	RCC->APB2ENR |= RCC_APB2ENR_TIM11EN;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN;
@@ -203,14 +203,18 @@ void initialization()
 	TIM11->CCER |= TIM_CCER_CC1E;
 	TIM11->CR1 |= TIM_CR1_CEN;
 	//PWM on FAN
-	GPIOF->MODER |= GPIO_MODER_MODER9_1;
-	GPIOF->AFR[1] |= GPIO_AFRL_AFRL1_0 | GPIO_AFRL_AFRL1_3;
-	TIM14->PSC = 108;
-	TIM14->ARR = 40;
-	TIM14->CCR1 = 0;
-	TIM14->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;
-	TIM14->CCER |= TIM_CCER_CC1E;
-	TIM14->CR1 |= TIM_CR1_CEN;
+	GPIOF->MODER &= ~GPIO_MODER_MODER9;
+	GPIOF->MODER |= GPIO_MODER_MODER9_0;
+	GPIOF->BSRR |= GPIO_BSRR_BR_9;
+//	GPIOF->AFR[1] |= GPIO_AFRL_AFRL1_0 | GPIO_AFRL_AFRL1_3;
+//	TIM14->PSC = 108;
+//	TIM14->ARR = 40;
+//	TIM14->CCR1 = 0;
+//	TIM14->CCMR1 |= TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2;
+//	TIM14->CCER |= TIM_CCER_CC1E;
+//	TIM14->CR1 |= TIM_CR1_CEN;
+
+
 
 	// Timers
 	TIM2->PSC = 1080;
@@ -239,11 +243,10 @@ void initialization()
 	SYSCFG->EXTICR[3] |= SYSCFG_EXTICR4_EXTI15_PF;
 	EXTI->IMR |= EXTI_IMR_MR0 | EXTI_IMR_MR2 | EXTI_IMR_MR4 | EXTI_IMR_MR5 | EXTI_IMR_MR8 | EXTI_IMR_MR15;
 
-//			 EXTI->FTSR |= EXTI_FTSR_TR0 | EXTI_FTSR_TR2 | EXTI_FTSR_TR4 | EXTI_FTSR_TR5 | EXTI_FTSR_TR8 | EXTI_FTSR_TR15;
 	EXTI->FTSR |= EXTI_FTSR_TR0 | EXTI_FTSR_TR2 | EXTI_FTSR_TR4 | EXTI_FTSR_TR5 | EXTI_FTSR_TR8 | EXTI_FTSR_TR15;
+	//	EXTI->RTSR |= EXTI_RTSR_TR0 | EXTI_RTSR_TR2 | EXTI_RTSR_TR4  | EXTI_RTSR_TR5 | EXTI_RTSR_TR8 | EXTI_RTSR_TR15;
+	EXTI->RTSR |= EXTI_RTSR_TR4;
 
-
-//	EXTI->RTSR |=  EXTI_RTSR_TR0 | EXTI_RTSR_TR2 | EXTI_RTSR_TR4  | EXTI_RTSR_TR5 | EXTI_RTSR_TR8 | EXTI_RTSR_TR15;
 	NVIC_SetPriority(EXTI0_IRQn, 15);
 	NVIC_SetPriority(EXTI2_IRQn, 15);
 	NVIC_SetPriority(EXTI4_IRQn, 15);
@@ -953,12 +956,12 @@ void TIM5_IRQHandler(void)
 		TIM3->CCR1 = 0;
 		TIM2->CR1 &= ~TIM_CR1_CEN;
 		TIM2->CNT = 0;
-		TIM14->CCR1 = 0;
+		GPIOF->BSRR |= GPIO_BSRR_BR_9;
 		btncnt_PF15 = 0;
 	}
 
-	if((GPIOG->IDR & GPIO_IDR_ID5) == 0 && (GPIOF->IDR & GPIO_IDR_ID15) == 0)
-		TIM14->CCR1 = 40;
+	//	if((GPIOG->IDR & GPIO_IDR_ID5) == 0 && (GPIOF->IDR & GPIO_IDR_ID15) == 0)
+	//		TIM14->CCR1 = 40;
 	//	else
 	//		TIM14->CCR1 = 0;
 
@@ -1101,7 +1104,7 @@ void EXTI0_IRQHandler()
 
 	if((flags & 0x8) == 0 && (flags & 0x1) == 0 && (flags & 0x2) == 0  && (flags & 0x4) == 0 && press_cnt == 1)
 	{
-		TIM14->CCR1 = 0;
+		GPIOF->BSRR |= GPIO_BSRR_BR_9;
 		if(predifined_parametrs == 3)
 			predifined_parametrs = 0;
 		if(predifined_parametrs == 2)
@@ -1187,7 +1190,7 @@ void EXTI2_IRQHandler()
 	if(press_cnt == 1)
 	{
 		TIM3->CCR1 = 0;
-		TIM14->CCR1 = 0;
+		GPIOF->BSRR |= GPIO_BSRR_BR_9;
 		TIM2->CR1 &= ~TIM_CR1_CEN;
 		TIM2->CNT = 0;
 		flags &= ~0x1;
@@ -1232,78 +1235,97 @@ void EXTI2_IRQHandler()
 
 void EXTI4_IRQHandler()
 {
-	uint8_t press_cnt = 0;
-	TIM4->CNT = 0;
-	if((GPIOD->IDR & GPIO_IDR_ID4) == 0)
+	if ((EXTI->PR & EXTI_PR_PR4) != 0)
 	{
-		if(buttonPressed_PD4 == 1)
+		uint8_t press_cnt = 0;
+		TIM4->CNT = 0;
+		if((GPIOD->IDR & GPIO_IDR_ID4) == 0)
 		{
-			press_cnt = press_cnt + 1;
-			buttonPressed_PD4 = 0;
-			TIM11->CCR1 = 100;
-			for(int i = 0; i < 200000;i++);
-			TIM11->CCR1 = 0;
-		}
-	}
-
-	if(press_cnt == 1)
-	{
-		if((flags & 0x2) != 0 && (set_hour_2 + set_hour) != 0)
-		{
-			if(set_hour == 0)
+			if(buttonPressed_PD4 == 1)
 			{
-				--set_hour_2;
-				set_hour = 9;
+				press_cnt = press_cnt + 1;
+				buttonPressed_PD4 = 0;
+				TIM11->CCR1 = 100;
+				for(int i = 0; i < 200000;i++);
+				TIM11->CCR1 = 0;
 			}
-			else
+		}
+
+		if(press_cnt == 1)
+		{
+			while((GPIOD->IDR & GPIO_IDR_ID4) == 0)
 			{
-				if(set_hour == 0)
+				if((flags & 0x2) != 0 && (set_hour_2 + set_hour) != 0)
 				{
-					if(set_hour_2 != 0)
+					if(set_hour == 0)
 					{
 						--set_hour_2;
 						set_hour = 9;
+						change_digit_set_time(1, set_hour_2);
+						change_digit_set_time(2, set_hour);
 					}
 					else
 					{
-						set_hour = 0;
-						set_hour_2 = 0;
+						if(set_hour == 0)
+						{
+							if(set_hour_2 != 0)
+							{
+								--set_hour_2;
+								set_hour = 9;
+							}
+							else
+							{
+								set_hour = 0;
+								set_hour_2 = 0;
+							}
+						}
+						--set_hour;
+						change_digit_set_time(1, set_hour_2);
+						change_digit_set_time(2, set_hour);
+						for(int i = 0; i <= 1500000; ++i);
 					}
 				}
-				--set_hour;
-			}
-		}
-		if((flags & 0x1) != 0 && (set_minute + set_minute_2) != 0)
-		{
-			if(set_minute == 0)
-			{
-				--set_minute_2;
-				set_minute = 9;
-			}
-			else
-			{
-				if(set_minute == 0)
+				if((flags & 0x1) != 0 && (set_minute + set_minute_2) != 0)
 				{
-					if(set_minute_2 != 0)
+					if(set_minute == 0)
 					{
 						--set_minute_2;
 						set_minute = 9;
+						change_digit_set_time(3, set_minute_2);
+						change_digit_set_time(4, set_minute);
 					}
 					else
 					{
-						set_minute = 0;
-						set_minute_2 = 0;
+						if(set_minute == 0)
+						{
+							if(set_minute_2 != 0)
+							{
+								--set_minute_2;
+								set_minute = 9;
+							}
+							else
+							{
+								set_minute = 0;
+								set_minute_2 = 0;
+							}
+						}
+						--set_minute;
+						change_digit_set_time(3, set_minute_2);
+						change_digit_set_time(4, set_minute);
+						for(int i = 0; i <= 1500000; ++i);
 					}
 				}
-				--set_minute;
+				if((flags & 0x4) != 0 && set_power != 0)
+				{
+					set_power -= 10;
+					change_digit_power(set_power);
+					for(int i = 0; i <= 1500000; ++i);
+				}
 			}
 		}
-		if((flags & 0x4) != 0 && set_power != 0)
-			set_power -= 10;
+		for(int i = 0; i <= 3600000; ++i);
+		EXTI->PR |= EXTI_PR_PR4;
 	}
-
-	for(int i = 0; i <= 3600000; ++i);
-	EXTI->PR |= EXTI_PR_PR4;
 }
 
 
@@ -1397,26 +1419,40 @@ void EXTI9_5_IRQHandler()
 
 		if(press_cnt8 == 1)
 		{
-			if((flags & 0x2) != 0 && (set_hour_2 + set_hour) != 18)
+			while((GPIOE->IDR & GPIO_IDR_ID8) == 0)
 			{
-				++set_hour;
-				if(set_hour == 10)
+				if((flags & 0x2) != 0 && (set_hour_2 + set_hour) != 18)
 				{
-					++set_hour_2;
-					set_hour = 0;
+					++set_hour;
+					if(set_hour == 10)
+					{
+						++set_hour_2;
+						set_hour = 0;
+					}
+					change_digit_set_time(1, set_hour_2);
+					change_digit_set_time(2, set_hour);
+					for(int i = 0; i <= 1000000; ++i);
+				}
+				if((flags & 0x1) != 0 && (set_minute + set_minute_2) != 18)
+				{
+					++set_minute;
+					if(set_minute == 10)
+					{
+						++set_minute_2;
+						set_minute = 0;
+					}
+					change_digit_set_time(3, set_minute_2);
+					change_digit_set_time(4, set_minute);
+					for(int i = 0; i <= 1500000; ++i);
+
+				}
+				if((flags & 0x4) != 0 && set_power != 100)
+				{
+					set_power += 10;
+					change_digit_power(set_power);
+					for(int i = 0; i <= 1500000; ++i);
 				}
 			}
-			if((flags & 0x1) != 0 && (set_minute + set_minute_2) != 18)
-			{
-				++set_minute;
-				if(set_minute == 10)
-				{
-					++set_minute_2;
-					set_minute = 0;
-				}
-			}
-			if((flags & 0x4) != 0 && set_power != 100)
-				set_power += 10;
 		}
 
 		for(int i = 0; i <= 3600000; ++i);
@@ -1453,7 +1489,7 @@ void EXTI15_10_IRQHandler()
 		TIM3->CCR1 = power;
 		TIM2->CNT = 0;
 		TIM2->CR1 |= TIM_CR1_CEN;
-		TIM14->CCR1 = 40;
+		GPIOF->BSRR |= GPIO_BSRR_BS_9;
 		change_digit_main_time(1, hour_2);
 		change_digit_main_time(2, hour);
 		change_digit_main_time(3, minute_2);
@@ -1462,22 +1498,12 @@ void EXTI15_10_IRQHandler()
 		NVIC_DisableIRQ(EXTI0_IRQn);
 		NVIC_DisableIRQ(EXTI4_IRQn);
 		NVIC_DisableIRQ(EXTI9_5_IRQn);
-		//		btncnt_PF15 = 0;
 	}
-	//	if(btncnt_PF15 == 2)
-	//	{
-	//		NVIC_EnableIRQ(EXTI0_IRQn);
-	//		NVIC_EnableIRQ(EXTI2_IRQn);
-	//		NVIC_EnableIRQ(EXTI4_IRQn);
-	//		NVIC_EnableIRQ(EXTI9_5_IRQn);
-	//		NVIC_EnableIRQ(EXTI15_10_IRQn);
-	//		btncnt_PF15 = 0;
-	//	}
 	else
 	{
 		TIM2->CR1 &= ~TIM_CR1_CEN;
 		TIM2->CNT = 0;
-		TIM14->CCR1 = 0;
+		GPIOF->BSRR |= GPIO_BSRR_BR_9;
 		TIM3->CCR1 = 0;
 		flags &= ~0x8;
 		flags &= ~0x80;
@@ -1497,7 +1523,7 @@ int main(void)
 {
 	initialization();
 
-//	 Initialization picture
+	//	 Initialization picture
 	LTDC_Layer2->CFBAR = (uint32_t)init_picture;
 	LTDC->SRCR |= LTDC_SRCR_VBR;
 	for(int i = 0; i <= 5000000; ++i);
